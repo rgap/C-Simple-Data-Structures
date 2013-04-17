@@ -1,0 +1,341 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+typedef struct nodo_AVL AVL;
+
+struct nodo_AVL{
+   int info;
+   int fb; // factor de balanceo
+   AVL *pai;
+   AVL *esq;
+   AVL *dir;
+};
+
+AVL *iniciaAVL(){
+	AVL *temp;
+   if((temp=(AVL *)malloc(sizeof(AVL)))!=NULL){
+      temp->info=0;
+      temp->fb=0;
+      temp->pai=NULL;
+   	temp->esq=NULL;
+      temp->dir=NULL;
+      return(temp);
+   }
+   else exit(0);
+}
+
+AVL *rotacionRR(AVL *no){
+   AVL *p;
+   p=no->dir;
+   no->dir=p->esq;
+   if(p->esq!=NULL)
+      p->esq->pai=no;
+   p->esq=no;
+   p->pai=no->pai;
+   no->pai=p;
+   no->fb=0;
+   return(p);
+}
+
+AVL *rotacionLL(AVL *no){
+   AVL *p;
+   p=no->esq;
+   no->esq=p->dir;
+   if(p->dir!=NULL)
+   	p->dir->pai=no;
+   p->dir=no;
+   p->pai=no->pai;
+   no->pai=p;
+   no->fb=0;
+   return(p);
+}
+
+AVL *rotacionLR(AVL *no){
+	AVL *pai;
+   AVL *no_esq;
+   AVL *nuevo_no;
+   int FB_fdir;
+   pai=no->pai;
+   no_esq=no->esq;
+   FB_fdir=no_esq->dir->fb;
+   no->esq=rotacionRR(no_esq);
+   nuevo_no=rotacionLL(no);
+   nuevo_no->pai=pai;
+   no->fb=(FB_fdir==1)?-1:0;
+   no_esq->fb=(FB_fdir==-1)?1:0;
+   return(nuevo_no);
+}
+
+AVL *rotacionRL(AVL *no){
+   AVL *pai;
+   AVL *no_dir;
+   AVL *nuevo_no;
+   int FB_fesq;
+   pai=no->pai;
+   no_dir=no->dir;
+   FB_fesq=no_dir->esq->fb;
+   no->dir=rotacionLL(no_dir);
+   nuevo_no=rotacionRR(no);
+   nuevo_no->pai=pai;
+   no->fb=(FB_fesq==-1)?1:0;
+   no_dir->fb=(FB_fesq==1)?-1:0;
+   return(nuevo_no);
+}
+
+AVL *bal_esq(AVL *no){
+   AVL *p;
+   p=no->esq;
+   if(p->fb==1)
+      no=rotacionLL(no);
+   else
+      no=rotacionLR(no);
+   no->fb=0;
+   return(no);
+}
+
+AVL *bal_dir(AVL *no){
+   AVL *p;
+   p=no->dir;
+   if(p->fb==-1)
+      no=rotacionRR(no);
+   else
+   	no=rotacionRL(no);
+   no->fb=0;
+   return(no);
+}
+
+AVL *aloca_nuevo_no(int info,bool *h){
+   AVL *nuevo_no;
+   if(nuevo_no=(AVL *) malloc(sizeof(AVL))){
+      nuevo_no->info=info;
+      nuevo_no->esq=NULL;
+      nuevo_no->dir=NULL;
+      nuevo_no->pai=NULL;
+      nuevo_no->fb=0;
+      *h=true;
+      return(nuevo_no);
+   }
+   else{
+      printf("No es posible separar memoria ");
+      *h=false;
+      return(NULL);
+   }
+}
+
+AVL *insertar(AVL *raiz,int info,bool *h){
+   AVL *nuevo_no;
+   if(raiz==NULL)
+      return(aloca_nuevo_no(info,h));
+   else{
+      if(info==raiz->info)
+   	   printf("Informacion ya contenida en el arbol");
+      else
+      	if(info<raiz->info){
+            raiz->esq=insertar(raiz->esq,info,h);
+            if(!raiz->esq->pai)
+               raiz->esq->pai=raiz;
+            if(*h)
+            	switch(raiz->fb){
+                  case -1:
+                     raiz->fb=0;
+                     *h=false;
+                     break;
+                  case 0:
+                     raiz->fb=1;
+                     break;
+                  case 1:
+                     raiz=bal_esq(raiz);
+                     *h=false;
+                     break;
+               }
+         }
+         else{
+            raiz->dir=insertar(raiz->dir,info,h);
+            if(!raiz->dir->pai)
+               raiz->dir->pai=raiz;
+            if(*h)
+            	switch(raiz->fb){
+                  case 1:
+                     raiz->fb=0;
+                     *h=false;
+                     break;
+                  case 0:
+                     raiz->fb=-1;
+                     break;
+                  case -1:
+                     raiz=bal_dir(raiz);
+                     *h=false;
+                     break;
+               }
+         }
+         return(raiz);
+   }
+}
+
+AVL *balanceo_izquierdo(AVL *no,bool *h){
+   AVL *f_dir;
+   int fb_dir;
+   switch(no->fb){
+      case 1:
+         no->fb=0;
+         break;
+      case 0:
+         no->fb=-1;
+         *h=false;
+         break;
+      case -1:
+         f_dir=no->dir;
+         fb_dir=f_dir->fb;
+         if(fb_dir<=0){
+            f_dir=rotacionRR(no);
+            if(fb_dir==0){
+               no->fb=-1;
+               f_dir->fb=1;
+               *h=false;
+            }
+            else{
+               no->fb=0;
+               f_dir->fb=0;
+            }
+            no=f_dir;
+         }
+         else{
+            no=rotacionRL(no);
+            no->fb=0;
+         }
+   }
+   return(no);
+}
+
+AVL *balanceo_derecho(AVL *no,bool *h){
+   AVL *f_esq;
+   int fb_esq;
+   switch(no->fb){
+      case -1:
+         no->fb=0;
+         break;
+      case 0:
+         no->fb=1;
+         *h=false;
+         break;
+      case 1:
+        f_esq=no->esq;
+        fb_esq=f_esq->fb;
+        if(fb_esq>=0){
+           f_esq=rotacionLL(no);
+           if(fb_esq==0){
+              no->fb=1;
+              f_esq->fb=-1;
+              *h=false;
+           }
+           else{
+              no->fb=0;
+              f_esq->fb=0;
+           }
+           no=f_esq;
+        }
+        else{
+           no=rotacionLR(no);
+           no->fb=0;
+        }
+   }
+   return(no);
+}
+
+AVL *busca_remove(AVL *no,AVL *no_llave,bool *h){
+   AVL *no_removido;
+   if(no->dir!=NULL){
+      no->dir=busca_remove(no->dir,no_llave,h);
+      if(*h)
+         no=balanceo_derecho(no,h);
+   }
+   else{
+   no_llave->info=no->info;
+   no_removido=no;
+   no=no->esq;
+   if(no!=NULL)
+      no->pai=no_removido->pai;
+   *h=true;
+   free(no_removido);
+   }
+   return(no);
+}
+
+AVL *remove(AVL *raiz,int info,bool *h){
+   if(raiz==NULL){
+       printf("Llave no localizada! ");
+       *h=false;
+   }
+   else{
+      if(raiz->info>info){
+         raiz->esq=remove(raiz->esq,info,h);
+         if(*h)
+            raiz=balanceo_izquierdo(raiz,h);
+      }
+      else
+         if(raiz->info<info){
+            raiz->dir=remove(raiz->dir,info,h);
+            if(*h)
+               raiz=balanceo_derecho(raiz,h);
+         }
+         else{
+            if(raiz->dir==NULL){
+               if(raiz->esq!=NULL)
+                  raiz->esq->pai=raiz->pai;
+               raiz=raiz->esq;
+               *h=true;
+            }
+            else
+               if(raiz->esq==NULL){
+                  if(raiz->dir!=NULL)
+                     raiz->dir->pai=raiz->pai;
+                  raiz=raiz->dir;
+                  *h=true;
+               }
+               else{
+                  raiz->esq=busca_remove(raiz->esq,raiz,h);
+                  if(*h)
+                     raiz=balanceo_izquierdo(raiz,h);
+               }
+         }
+   }
+   return(raiz);
+}
+
+void en_orden(AVL *root){
+	if(root!=NULL){
+   	en_orden(root->esq);
+      printf("%d->",root->info);
+      en_orden(root->dir);
+   }
+}
+
+int main(){
+   AVL *A;
+   bool h=false;
+   A=(AVL *)iniciaAVL();
+   A=insertar(A,17,&h);
+   A=insertar(A,19,&h);
+   A=insertar(A,18,&h);
+   A=insertar(A,1,&h);
+   A=insertar(A,2,&h);
+   A=insertar(A,9,&h);
+   A=insertar(A,3,&h);
+   A=insertar(A,10,&h);
+   A=insertar(A,6,&h);
+   A=insertar(A,15,&h);
+   A=insertar(A,12,&h);
+   A=insertar(A,5,&h);
+   A=insertar(A,14,&h);
+   A=insertar(A,11,&h);
+   A=insertar(A,4,&h);
+   A=insertar(A,8,&h);
+   A=insertar(A,13,&h);
+   A=insertar(A,16,&h);
+   A=insertar(A,7,&h);
+   en_orden(A);
+   A=remove(A,10,&h);
+   en_orden(A);
+   return 0;
+}

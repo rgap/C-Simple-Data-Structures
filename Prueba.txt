@@ -1,0 +1,81 @@
+int Elimina_Elemento(LE *L, int A){
+   int i,ant;
+    
+   if (L->head == -1){    
+       return -1;
+   }
+   else 
+   { 
+       i = L->head;        
+      
+       if (L->nodo[i].elem == A) 
+       { 
+          L->head = L->nodo[i].prox; 
+          (L->vac->ultimo)++;
+          return 1;
+       } 
+       while(i != -1){
+          if(L->nodo[i].elem==A){
+                L->nodo[ant].prox=L->nodo[i].prox; 
+                L->nodo[i].prox=NULL;
+                (L->vac->ultimo)++;
+                free(L->nodo);
+                return 1;
+          }     
+          else{
+                ant=i; 
+                i=L->nodo[i].prox;
+          } 
+       }
+       return -1;
+   }
+}
+
+---------------------------------------------------------------------
+
+int Elimina_Elemento(LE *L, int A){
+   int i,ant;
+    
+   if (L->head == -1){    
+       return -1;
+   }
+//   
+   else 
+   { 
+       i = L->head;        
+       ant = -1; 
+       while ((i != -1) && (L->nodo[i].elem != A)) 
+       { 
+         ant = i; /* guarda la posicion del anterior */ 
+         i = L->nodo[i].prox; 
+       }  
+       cout<<L->nodo[i].elem<<endl;
+
+       if (ant == -1) /* Borrar en inicio de la lista */ 
+       { 
+          cout<<"aaa";
+          
+          L->nodo[L->vac->pos_vac[L->vac->ultimo]].prox=-1;
+      
+          (L->vac->ultimo)++;
+          
+          return 1;
+       }
+          
+       else{
+          cout<<"bbb";
+          L->nodo[L->vac->pos_vac[L->vac->ultimo]].prox =  L->nodo[ant].prox; 
+          L->nodo[ant].prox = L->nodo[L->vac->pos_vac[L->vac->ultimo]].prox; 
+          (L->vac->ultimo)++;
+          return 1;
+       }
+        
+       return -1;
+   }
+}
+---------------------------------------------------------------------------------------------------
+
+push pop
+recursividad
+listas enlazadas
+codigo en c  
